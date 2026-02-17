@@ -5,36 +5,32 @@
 using namespace sf;
 
 int main() {
-    RenderWindow window(VideoMode(400, 700), "Count Master Clone");
+    RenderWindow window(VideoMode(450, 700), "Count Master PC v1.0");
     window.setFramerateLimit(60);
 
-    // Player (Crowd Leader)
-    CircleShape player(15.f);
-    player.setFillColor(Color::Cyan);
-    player.setOutlineThickness(2);
-    player.setOutlineColor(Color::White);
-    player.setPosition(185, 600);
-
     int crowdCount = 1;
+    
+    // Leader Player
+    CircleShape leader(12.f);
+    leader.setFillColor(Color(0, 200, 255));
+    leader.setOutlineThickness(2);
+    leader.setPosition(215, 600);
 
-    // Gate 1 (Addition Gate - Blue)
-    RectangleShape gateAdd(150.f, 40.f);
-    gateAdd.setFillColor(Color(0, 0, 255, 150));
-    gateAdd.setPosition(30, 200);
+    // Crowd Visuals (Followers)
+    std::vector<CircleShape> followers;
 
-    // Gate 2 (Multiplication Gate - Red)
-    RectangleShape gateMult(150.f, 40.f);
-    gateMult.setFillColor(Color(255, 0, 0, 150));
-    gateMult.setPosition(220, 200);
+    // Gates
+    RectangleShape gate(180.f, 50.f);
+    gate.setFillColor(Color(0, 0, 255, 180));
+    gate.setPosition(20, 150);
+    bool gateActive = true;
 
-    // Font Loading (Make sure to push arial.ttf to github too)
     Font font;
     font.loadFromFile("arial.ttf"); 
-
-    Text uiText;
-    uiText.setFont(font);
-    uiText.setCharacterSize(24);
-    uiText.setPosition(10, 10);
+    Text txt;
+    txt.setFont(font);
+    txt.setCharacterSize(22);
+    txt.setPosition(20, 20);
 
     while (window.isOpen()) {
         Event event;
@@ -43,30 +39,42 @@ int main() {
         }
 
         // Movement
-        if (Keyboard::isKeyPressed(Keyboard::Left) && player.getPosition().x > 0) player.move(-5.f, 0.f);
-        if (Keyboard::isKeyPressed(Keyboard::Right) && player.getPosition().x < 370) player.move(5.f, 0.f);
+        if (Keyboard::isKeyPressed(Keyboard::Left) && leader.getPosition().x > 10) leader.move(-6.f, 0.f);
+        if (Keyboard::isKeyPressed(Keyboard::Right) && leader.getPosition().x < 420) leader.move(6.f, 0.f);
 
-        // Simple Collision Logic
-        FloatRect playerBound = player.getGlobalBounds();
-        if (playerBound.intersects(gateAdd.getGlobalBounds())) {
-            crowdCount += 10; 
-            gateAdd.setPosition(-500, -500); // Remove gate after hit
+        // Gate Logic
+        if (gateActive && leader.getGlobalBounds().intersects(gate.getGlobalBounds())) {
+            crowdCount += 15; // +15 people
+            gateActive = false;
+            
+            // Add followers visually
+            for(int i=0; i<15; i++) {
+                CircleShape f(8.f);
+                f.setFillColor(Color(0, 150, 255, 150));
+                followers.push_back(f);
+            }
         }
-        if (playerBound.intersects(gateMult.getGlobalBounds())) {
-            crowdCount *= 2;
-            gateMult.setPosition(-500, -500);
+
+        window.clear(Color(40, 40, 40));
+
+        // Draw Followers (Offsetting them behind leader)
+        for(size_t i=0; i<followers.size(); i++) {
+            float ox = (i % 5) * 15 - 30; // 5 columns
+            float oy = (i / 5) * 15 + 30; // rows behind
+            followers[i].setPosition(leader.getPosition().x + ox, leader.getPosition().y + oy);
+            window.draw(followers[i]);
         }
 
-        uiText.setString("CROWD: " + std::to_string(crowdCount));
+        if(gateActive) {
+            window.draw(gate);
+            Text gt("+15", font, 20);
+            gt.setPosition(gate.getPosition().x + 70, gate.getPosition().y + 10);
+            window.draw(gt);
+        }
 
-        window.clear(Color(30, 30, 30)); // Dark Road
-        
-        // Draw UI Elements
-        window.draw(gateAdd);
-        window.draw(gateMult);
-        window.draw(player);
-        window.draw(uiText);
-        
+        txt.setString("CROWD: " + std::to_string(crowdCount));
+        window.draw(leader);
+        window.draw(txt);
         window.display();
     }
     return 0;

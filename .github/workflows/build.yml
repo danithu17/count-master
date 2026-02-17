@@ -1,4 +1,4 @@
-name: Build Count Master UI
+name: Build Count Master PC
 on: [push]
 
 jobs:
@@ -7,22 +7,26 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Setup vcpkg
+    - name: Install Vcpkg & SFML
+      shell: pwsh
       run: |
         git clone https://github.com/microsoft/vcpkg.git
         cd vcpkg
-        ./bootstrap-vcpkg.sh
-        ./vcpkg install sfml:x64-windows
+        .\bootstrap-vcpkg.bat
+        .\vcpkg install sfml:x64-windows
 
     - name: Compile Game
+      shell: pwsh
       run: |
-        g++ -c main.cpp -I"vcpkg/packages/sfml_x64-windows/include"
-        g++ main.o -o CountMaster.exe -L"vcpkg/packages/sfml_x64-windows/lib" -lsfml-graphics -lsfml-window -lsfml-system
+        $inc = "vcpkg/installed/x64-windows/include"
+        $lib = "vcpkg/installed/x64-windows/lib"
+        g++ -c main.cpp -I$inc
+        g++ main.o -o CountMaster.exe -L$lib -lsfml-graphics -lsfml-window -lsfml-system
 
-    - name: Upload Game Bundle
+    - name: Upload Build
       uses: actions/upload-artifact@v4
       with:
-        name: CountMaster-Windows
+        name: CountMaster-PC-Version
         path: |
           CountMaster.exe
-          vcpkg/packages/sfml_x64-windows/bin/*.dll
+          vcpkg/installed/x64-windows/bin/*.dll
